@@ -2,9 +2,10 @@ import os
 from loguru import logger
 import sys
 from itertools import combinations
+from combinations import Combination
 
 logger.remove()
-logger.add(sys.stdout, level="INFO")
+logger.add(sys.stdout, level="DEBUG")
 
 def rSubset(arr, r):
     return list(combinations(arr, r))
@@ -18,19 +19,59 @@ def get_number_from_digits(numbers):
     strings = [str(num) for num in numbers]
     return int(''.join(strings))
 
-def get_highest_joltage(baterries: str) -> int:
-    voltages = [int(num.strip()) for num in baterries.strip()]
-    logger.debug(voltages)
-    r = 12
+# def get_highest_joltage(baterries: str) -> int:
+#     voltages = [int(num.strip()) for num in baterries.strip()]
+#     logger.debug(voltages)
+#     r = 2
+#     com = Combination(voltages, r)
+#     maximum = 0
+#     com.GetFirst()
+#     while (com.HasNext()) :
+#         combination = com.Next()
+        
+#         logger.debug(combination)
+#         number = get_number_from_digits(combination)
+#         if number > maximum:
+#             maximum = number
+        
+
+#     logger.info(f"Maximum: {maximum}")
+#     return maximum
+
+
+def get_highest_joltage(batteries: str) -> int:
+    voltages = [int(num.strip()) for num in batteries.strip()]
+    r = 12  # size of combination
+    n = len(voltages)
+
+    # Initialize indices for first combination
+    indices = list(range(r))
     maximum = 0
-    combinations = rSubset(voltages, r)
-    logger.info(len(combinations))
-    for comb in combinations:
-        number = get_number_from_digits(comb)
+
+    while True:
+        # Build current combination
+        combination = [voltages[i] for i in indices]
+        number = get_number_from_digits(combination)
         if number > maximum:
             maximum = number
+
+        # Generate next combination
+        # Find the rightmost index that can be incremented
+        for i in reversed(range(r)):
+            if indices[i] != i + n - r:
+                break
+        else:
+            # All combinations generated
+            break
+
+        indices[i] += 1
+        for j in range(i + 1, r):
+            indices[j] = indices[j - 1] + 1
+
     logger.info(f"Maximum: {maximum}")
     return maximum
+
+
     
 
 def main():
