@@ -2,10 +2,21 @@ import os
 from loguru import logger
 import sys
 from itertools import combinations
-from combinations import Combination
+
 
 logger.remove()
-logger.add(sys.stdout, level="DEBUG")
+logger.add(sys.stdout, level="INFO")
+
+def get_max_number_index(array: list[int]) -> int:
+    #return highest number with lowest index
+    max_number = -1
+    max_index = -1
+    for i, current in reversed(list(enumerate(array))):
+        if current >= max_number:
+            max_number = current
+            max_index = i
+    return max_index
+    
 
 def rSubset(arr, r):
     return list(combinations(arr, r))
@@ -19,58 +30,37 @@ def get_number_from_digits(numbers):
     strings = [str(num) for num in numbers]
     return int(''.join(strings))
 
-# def get_highest_joltage(baterries: str) -> int:
-#     voltages = [int(num.strip()) for num in baterries.strip()]
-#     logger.debug(voltages)
-#     r = 2
-#     com = Combination(voltages, r)
-#     maximum = 0
-#     com.GetFirst()
-#     while (com.HasNext()) :
-#         combination = com.Next()
-        
-#         logger.debug(combination)
-#         number = get_number_from_digits(combination)
-#         if number > maximum:
-#             maximum = number
-        
-
-#     logger.info(f"Maximum: {maximum}")
-#     return maximum
-
-
 def get_highest_joltage(batteries: str) -> int:
     voltages = [int(num.strip()) for num in batteries.strip()]
+    logger.debug(f"Voltages: {voltages}")
     r = 12  # size of combination
     n = len(voltages)
+    lower_index = 0
+    final_nums = []
+    for i in range(r):
+        logger.debug(f"i: {i} | boundary: {lower_index}:{n - r + i + 1} | length: {n}")
+        array = voltages[lower_index:n - r + i + 1]
+        max_index = get_max_number_index(array)
+        logger.debug(f"Max index: {max_index} | Max number: {voltages[max_index]}")
+        final_nums.append(voltages[lower_index + max_index])
+        lower_index += max_index + 1
 
-    # Initialize indices for first combination
-    indices = list(range(r))
-    maximum = 0
-
-    while True:
-        # Build current combination
-        combination = [voltages[i] for i in indices]
-        number = get_number_from_digits(combination)
-        if number > maximum:
-            maximum = number
-
-        # Generate next combination
-        # Find the rightmost index that can be incremented
-        for i in reversed(range(r)):
-            if indices[i] != i + n - r:
-                break
-        else:
-            # All combinations generated
-            break
-
-        indices[i] += 1
-        for j in range(i + 1, r):
-            indices[j] = indices[j - 1] + 1
-
-    logger.info(f"Maximum: {maximum}")
+    # join numbers
+    maximum = int("".join([str(num) for num in final_nums]))
     return maximum
 
+def get_highest_joltage_old(baterries: str) -> int:
+    voltages = [int(num.strip()) for num in baterries.strip()]
+    # logger.debug(voltages)
+    r = 12
+    maximum = 0
+    combinations = rSubset(voltages, r)
+    # logger.info(len(combinations))
+    for comb in combinations:
+        number = get_number_from_digits(comb)
+        if number > maximum:
+            maximum = number
+    return maximum
 
     
 
@@ -83,7 +73,13 @@ def main():
     # logger.info(task_input)
     outputs = []
     for battery_rack in task_input:
-        outputs.append(get_highest_joltage(battery_rack))
+        number1 = get_highest_joltage(battery_rack)
+        # number2 = get_highest_joltage_old(battery_rack)
+        # if number1 != number2:
+        #     logger.error(f"Mismatch! {number1} != {number2}")
+        #     logger.info(f"Battery rack: {battery_rack}")
+        logger.info(f"Highest joltage for rack {battery_rack.strip()}: {number1}")
+        outputs.append(number1)
 
     logger.info(f"Sum: {sum(outputs)}")
 
