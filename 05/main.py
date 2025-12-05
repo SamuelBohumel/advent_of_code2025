@@ -31,10 +31,10 @@ def handle_two_ranges(range1: Range, range2: Range) -> list:
         return [range1]
 
     # if they dont overlap, return both | or if they exacly touch each other
-    # Disjoint: r1 before r2
+    # r1 before r2
     if range1.max < range2.min:
         return [range1, range2]
-    # Disjoint: r2 before r1
+    # r2 before r1
     elif range2.max < range1.min:
         return [range2, range1]
 
@@ -75,12 +75,11 @@ def get_total_fresh_ingredients_count(ranges: list[Range]) -> int:
             # Overlap or touch -> merged into a single range
             merged[-1] = result[0]
         else:
-            # Disjoint -> append the next range
+            # two separate ranges -> append the next range
             # Because we sorted, result should be [last, r] in order
             merged.append(r)
         
-
-    total = sum(r.max - r.min for r in merged)
+    total = sum( (r.max+1) - r.min for r in merged) #plus one because we count onclusive
     return int(total)
 
             
@@ -113,9 +112,6 @@ def main():
         ranges.append(
             Range(min=item.split('-')[0], 
                   max=item.split('-')[1]))
-    #task 2
-    total_ingr = get_total_fresh_ingredients_count(ranges)
-    logger.info(f"Total ingr: {total_ingr}")
     
     #task 1
     #check if every ingredient is in range
@@ -130,6 +126,9 @@ def main():
     # all_possible_ids = get_total_fresh_ingredients_count(ranges_str)
     # logger.info(f"all_possible_ids: {all_possible_ids}")
 
+    #task 2
+    total_ingr = get_total_fresh_ingredients_count(ranges)
+    logger.info(f"Total ingr: {total_ingr}")
 
 if __name__ == "__main__":
     main()
