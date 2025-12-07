@@ -52,21 +52,27 @@ def tachyon_flow_task_1(tachyon_map: list[str]) -> int:
 
 def get_timelines(position: str, paths: list[str]):
     # logger.debug(f"position: {position} | paths: {paths}")
-    count = 0
     if paths == []:
         return 0
-    for number in paths[0]:
-        logger.debug(f"Number: {number} | position = {position}")
+    numbers = paths[0]
+    left, right, middle = None, None, None
+    count_left, count_right = 0, 0
+    for number in numbers:
         if position - 1 == number:
-            count += get_timelines(position=number, paths=paths[1:])
-        elif position + 1 == number:
-            count += get_timelines(position=number, paths=paths[1:])
-        elif position == number:
-            count += get_timelines(position=number, paths=paths[1:])
-        else:
-            count += 1
+            left = number
+        if position + 1 == number:
+            right = number
+        if number == position:
+            middle = number
+    if left is not None:
+        count_left = get_timelines(position=left, paths=paths[1:])
+    if right is not None:
+        count_right = get_timelines(position=right, paths=paths[1:])
+    if middle is not None:
+        get_timelines(position=middle, paths=paths[1:])
 
-    return count
+
+    return 1 + count_left + count_right
 
 
 #Alterantive timelines
@@ -104,7 +110,7 @@ def tachyon_flow_task_2(tachyon_map: list[str]) -> int:
     print_tachyon_manifold(tachyon_map=tachyon_map)  
     for path in paths:
         logger.debug(path) 
-    timeline_count = get_timelines(position=paths[0][0], paths=paths[1:3])
+    timeline_count = get_timelines(position=paths[0][0], paths=paths[1:])
     return timeline_count
 
 
