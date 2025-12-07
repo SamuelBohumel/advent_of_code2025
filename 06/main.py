@@ -32,26 +32,6 @@ def compute_problem(problem: list[str]) -> list[str]:
         raise Exception(f"Unknown operator: {operator}")
     return [operator, str(result)]
 
-def swap_numbers(numbers: list[str]) -> list[str]:
-    """
-    Each number is given in its own column, with the most 
-    significant digit at the top and the least significant 
-    digit at the bottom.
-    from numbers:
-    64
-    23
-    314
-    create: 623, 431 and 4
-    """
-    max_length_num = max([len(number) for number in numbers])
-    new_list = ["" for i in range(max_length_num)]
-    logger.debug(numbers)
-    for number in numbers:
-        for j in range(len(number)):
-            index = max_length_num - len(number) + j
-            new_list[index] += str(number[j])
-    return new_list
-
 
 def count_problems(problems: list[list]) -> int:
     grand_total = 0
@@ -74,7 +54,7 @@ def count_problems(problems: list[list]) -> int:
 
     return grand_total
 
-def count_problems_task2(problems: list[list], rows: int, cols: int) -> int:
+def count_problems_task2(problems: list[list], rows: int, cols: int, operations: list[str]) -> int:
     grand_total = 0
     for problem in problems:
         problem = problem.replace("\n", "")
@@ -83,7 +63,7 @@ def count_problems_task2(problems: list[list], rows: int, cols: int) -> int:
     for i, row in enumerate(problems[:-1]):
         problem_id = 0
         for j, character in enumerate(row):
-            if character != " ":
+            if character.isnumeric():
                 all_numbers.append(Number(
                     number=character,
                     row=i,
@@ -98,16 +78,29 @@ def count_problems_task2(problems: list[list], rows: int, cols: int) -> int:
         if num.problem_id not in numbers.keys():
             numbers[num.problem_id] = {}
         if num.col not in numbers[num.problem_id].keys():
-            numbers[num.problem_id] = {}
+            # numbers[num.problem_id] = {}
+            numbers[num.problem_id][num.col] = ""
         numbers[num.problem_id][num.col] += num.number
     logger.debug(numbers)
-
+    for problem_id, cols in numbers.items():
+        first_key = next(iter(cols))
+        total_problem = int(cols[first_key])
+        for num_id, number in cols.items():
+            if num_id == first_key:
+                continue
+            logger.debug(f"problem: {problem_id}: number: {number} | operation: {operations[problem_id]}")
+            if operations[problem_id] == '+':
+                total_problem += int(number)
+            elif operations[problem_id] == '*':
+                total_problem *= int(number)
+        grand_total += total_problem
+    return grand_total
 
 
 def main():
     task_input = None
     file_path = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(file_path, "ex_input.txt"), "r") as f:
+    with open(os.path.join(file_path, "input.txt"), "r") as f:
         orig_task_input = f.readlines()
     
     #clear input and split by space
@@ -126,7 +119,7 @@ def main():
         
     # total = count_problems(problems)
     # logger.info(f"Total (task 1): {total}")
-    total2 = count_problems_task2(problems=orig_task_input, rows=rows, cols=numbers_in_row)
+    total2 = count_problems_task2(problems=orig_task_input, rows=rows, cols=numbers_in_row, operations=problems[-1])
     logger.info(f"Total (task 2): {total2}")
 
 
