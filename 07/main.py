@@ -71,7 +71,7 @@ def get_timelines(position: str, paths: list[str]):
     if middle is not None:
         get_timelines(position=middle, paths=paths[1:])
 
-
+    logger.debug(f"left: {count_left} |  right: {count_right}")
     return 1 + count_left + count_right
 
 
@@ -110,7 +110,7 @@ def tachyon_flow_task_2(tachyon_map: list[str]) -> int:
     print_tachyon_manifold(tachyon_map=tachyon_map)  
     for path in paths:
         logger.debug(path) 
-    timeline_count = get_timelines(position=paths[0][0], paths=paths[1:])
+    timeline_count = get_timelines(position=paths[0][0], paths=paths[1:4])
     return timeline_count
 
 
