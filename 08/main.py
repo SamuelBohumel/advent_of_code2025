@@ -82,6 +82,7 @@ def wire_circuits(points: list[Point], distances: list[float]):
             #create new circuit
             circuits.append([point.id1, point.id2])
             counter += 1
+    logger.debug(f"circuits: {circuits}")
     # multiply 3 biggest circuits
     circuit_sizes = [len(circuit) for circuit in circuits]
     logger.debug(f"circuit_sizes: {circuit_sizes}")
