@@ -52,27 +52,24 @@ def tachyon_flow_task_1(tachyon_map: list[str]) -> int:
 
 def get_timelines(position: str, paths: list[str]):
     # logger.debug(f"position: {position} | paths: {paths}")
-    if paths == []:
-        return 0
     numbers = paths[0]
-    left, right, middle = None, None, None
-    count_left, count_right = 0, 0
+    count_left, count_right, count_middle = 0, 0, 0
     for number in numbers:
         if position - 1 == number:
-            left = number
+            if len(paths) == 1:
+                return 1
+            count_left += get_timelines(position=number, paths=paths[1:])
         if position + 1 == number:
-            right = number
+            if len(paths) == 1:
+                return 1
+            count_right += get_timelines(position=number, paths=paths[1:])
         if number == position:
-            middle = number
-    if left is not None:
-        count_left = get_timelines(position=left, paths=paths[1:])
-    if right is not None:
-        count_right = get_timelines(position=right, paths=paths[1:])
-    if middle is not None:
-        get_timelines(position=middle, paths=paths[1:])
+            if len(paths) == 1:
+                return 0
+            count_middle += get_timelines(position=number, paths=paths[1:])
 
     logger.debug(f"left: {count_left} |  right: {count_right}")
-    return 1 + count_left + count_right
+    return count_left + count_right + count_middle
 
 
 #Alterantive timelines
