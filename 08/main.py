@@ -53,38 +53,8 @@ def sort_distances(distances: list[float]) -> list[Pair]:
             logger.debug(pair)
     return pairs
 
-# def join_circuits(circuits) -> list[list[int]]:
-#     # check if there are two boxes with same IDs: if yes, join them
-#     merge_list = []
-#     length = len(circuits)
-#     for i in range(length):
-        
-#         for j in range(length):
-#             if j < i:
-#                 bool(set(circuits[i]) & set(circuits[j]))
 
-#merge function to  merge all sublist having common elements.
-#Took from https://www.geeksforgeeks.org/python/python-merge-list-with-common-elements-in-a-list-of-lists/
-def merge_circuits(lists):
-    neigh = defaultdict(set)
-    visited = set()
-    for each in lists:
-        for item in each:
-            neigh[item].update(each)
-    def comp(node, neigh = neigh, visited = visited, vis = visited.add):
-        nodes = set([node])
-        next_node = nodes.pop
-        while nodes:
-            node = next_node()
-            vis(node)
-            nodes |= neigh[node] - visited
-            yield node
-    for node in neigh:
-        if node not in visited:
-            yield sorted(comp(node))
-
-
-def wire_circuits(points: list[Point], distances: list[float]):
+def wire_circuits(distances: list[float]):
     sorted_pairs: list[Pair] = sort_distances(distances)
     circuits = []
     #put first circuit together
@@ -132,6 +102,60 @@ def wire_circuits(points: list[Point], distances: list[float]):
     return result
 
 
+def wire_circuits_task_2(distances: list[float], points: list[Point]):
+    # keeep connecting all boex until they are all together
+    sorted_pairs: list[Pair] = sort_distances(distances)
+    circuits = []
+    #put first circuit together
+    circuits.append([sorted_pairs[0].id1, sorted_pairs[0].id2])
+    last_append = None
+    i = 0
+    while i != len(sorted_pairs):
+        i += 1
+        point = sorted_pairs[i]
+        #check arrys if IDs are there
+        point_inserted = False
+        point_in_circuits = []
+        for j in range(len(circuits)):
+            circuit = circuits[j]
+            if point.id1 in circuit and point.id2 in circuit:   # both are there, skip whole logic and go to another point
+                point_inserted = True
+                break
+            if point.id1 in circuit:
+                circuit.append(point.id2)
+                last_append = [point.id1, point.id2]
+                point_inserted = True
+                point_in_circuits.append(j)
+            elif point.id2 in circuit:
+                circuit.append(point.id1)
+                last_append = [point.id1, point.id2]
+                point_inserted = True
+                point_in_circuits.append(j)
+        
+        #if points is in more that one circuits, merge those circuits togethert
+        if len(point_in_circuits) > 1 :
+            logger.info(f"point_in_circuits: {point_in_circuits}")
+            index1, index2 = point_in_circuits[0], point_in_circuits[1]
+            merged = list(set(circuits[index1]) | set(circuits[index2]))
+            #remove index 2 and replace index2 with merged array
+            del circuits[index2]
+            circuits[index1] = merged
+            #break if there is only one circuit at all after merging
+            if len(circuits) == 1:
+                break
+        if point_inserted == False:
+            #create new circuit
+            circuits.append([point.id1, point.id2])
+    # logger.debug(f"circuits: {circuits}")
+    logger.info(f"Last append: {last_append}")
+    #coordinates of last points
+    x1 = points[last_append[0]].x
+    x2 = points[last_append[1]].x
+    logger.info(f"Last connected points X coords: {x1}, {x2}")
+    # result = x1 * x2
+    # return result
+
+
 def compute_distances(points: list[Point]):
     length = len(points)
     distances = []
@@ -150,7 +174,7 @@ def compute_distances(points: list[Point]):
 def main():
     task_input = None
     file_path = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(file_path, "input.txt"), "r") as f:
+    with open(os.path.join(file_path, "ex_input.txt"), "r") as f:
         task_input = f.readlines()
     
     task_input = [string.strip().split(',') for string in task_input]
@@ -161,8 +185,12 @@ def main():
     # for p in points:
     #     logger.debug(p)
     distances = compute_distances(points=points)
-    result = wire_circuits(points=points, distances=copy.deepcopy(distances))
-    logger.info(f"Result: {result}")
+    #task 1
+    # result = wire_circuits(distances=copy.deepcopy(distances))
+    # logger.info(f"Result: {result}")
+    #task2
+    result2 = wire_circuits_task_2(distances=copy.deepcopy(distances), points=points)
+    logger.info(f"Result: {result2}")
 
 
 if __name__ == "__main__":
