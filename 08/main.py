@@ -7,7 +7,7 @@ from collections import defaultdict
 logger.remove()
 logger.add(sys.stdout, level="DEBUG")
 
-CONNECTION_LIMIT = 10
+CONNECTION_LIMIT = 1000
 
 class Point:
 
@@ -89,39 +89,44 @@ def wire_circuits(points: list[Point], distances: list[float]):
     circuits = []
     #put first circuit together
     circuits.append([sorted_pairs[0].id1, sorted_pairs[0].id2])
-    counter = 1
-    for i in range(len(sorted_pairs)):
-        if counter == CONNECTION_LIMIT:
-            break
+    for i in range(1, CONNECTION_LIMIT):
         point = sorted_pairs[i]
         #check arrys if IDs are there
         point_inserted = False
+        point_in_circuits = []
         for j in range(len(circuits)):
             circuit = circuits[j]
-            if point.id1 in circuit and point.id2 in circuit:   # both are there, skip
+            if point.id1 in circuit and point.id2 in circuit:   # both are there, skip whole logic and go to another point
                 point_inserted = True
                 break
             if point.id1 in circuit:
                 circuit.append(point.id2)
-                counter += 1
                 point_inserted = True
-                break
+                point_in_circuits.append(j)
             elif point.id2 in circuit:
                 circuit.append(point.id1)
-                counter += 1
                 point_inserted = True
-                break
+                point_in_circuits.append(j)
+        
+        #if points is in more that one circuits, merge those circuits togethert
+        if len(point_in_circuits) > 1 :
+            logger.info(f"point_in_circuits: {point_in_circuits}")
+            index1, index2 = point_in_circuits[0], point_in_circuits[1]
+            merged = list(set(circuits[index1]) | set(circuits[index2]))
+            #remove index 2 and replace index2 with merged array
+            del circuits[index2]
+            circuits[index1] = merged
         if point_inserted == False:
             #create new circuit
             circuits.append([point.id1, point.id2])
-            counter += 1
-        circuits = list(merge_circuits((circuits)))
     logger.debug(f"circuits: {circuits}")
     # multiply 3 biggest circuits
     circuit_sizes = [len(circuit) for circuit in circuits]
-    logger.debug(f"circuit_sizes: {circuit_sizes}")
+    
     circuit_sizes.sort(reverse=True)
+    # logger.debug(f"circuit_sizes: {circuit_sizes}")
     result = 1
+    logger.info(f"Top 3 circuits: {circuit_sizes[:3]}")
     for size in circuit_sizes[:3]:
         result *= size
     return result
@@ -145,7 +150,7 @@ def compute_distances(points: list[Point]):
 def main():
     task_input = None
     file_path = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(file_path, "ex_input.txt"), "r") as f:
+    with open(os.path.join(file_path, "input.txt"), "r") as f:
         task_input = f.readlines()
     
     task_input = [string.strip().split(',') for string in task_input]
