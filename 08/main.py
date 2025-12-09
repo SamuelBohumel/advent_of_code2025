@@ -3,6 +3,7 @@ from loguru import logger
 import sys
 import math
 import copy
+from collections import defaultdict
 logger.remove()
 logger.add(sys.stdout, level="DEBUG")
 
@@ -47,12 +48,40 @@ def sort_distances(distances: list[float]) -> list[Pair]:
     pairs.sort(key=lambda x: x.distance)
     #delete those where IDs are same
     # new_pairs = []
-    # for pair in pairs:
-    #     if pair.id1 == pair.id2:
-    #         logger.debug(pair)
-    #     else:
-    #         new_pairs.append(pair)
+    for pair in pairs:
+        if pair.id1 == pair.id2:
+            logger.debug(pair)
     return pairs
+
+# def join_circuits(circuits) -> list[list[int]]:
+#     # check if there are two boxes with same IDs: if yes, join them
+#     merge_list = []
+#     length = len(circuits)
+#     for i in range(length):
+        
+#         for j in range(length):
+#             if j < i:
+#                 bool(set(circuits[i]) & set(circuits[j]))
+
+#merge function to  merge all sublist having common elements.
+#Took from https://www.geeksforgeeks.org/python/python-merge-list-with-common-elements-in-a-list-of-lists/
+def merge_circuits(lists):
+    neigh = defaultdict(set)
+    visited = set()
+    for each in lists:
+        for item in each:
+            neigh[item].update(each)
+    def comp(node, neigh = neigh, visited = visited, vis = visited.add):
+        nodes = set([node])
+        next_node = nodes.pop
+        while nodes:
+            node = next_node()
+            vis(node)
+            nodes |= neigh[node] - visited
+            yield node
+    for node in neigh:
+        if node not in visited:
+            yield sorted(comp(node))
 
 
 def wire_circuits(points: list[Point], distances: list[float]):
@@ -61,12 +90,14 @@ def wire_circuits(points: list[Point], distances: list[float]):
     #put first circuit together
     circuits.append([sorted_pairs[0].id1, sorted_pairs[0].id2])
     counter = 1
-    for point in sorted_pairs:
+    for i in range(len(sorted_pairs)):
         if counter == CONNECTION_LIMIT:
             break
+        point = sorted_pairs[i]
         #check arrys if IDs are there
         point_inserted = False
-        for circuit in circuits:
+        for j in range(len(circuits)):
+            circuit = circuits[j]
             if point.id1 in circuit and point.id2 in circuit:   # both are there, skip
                 point_inserted = True
                 break
@@ -74,14 +105,17 @@ def wire_circuits(points: list[Point], distances: list[float]):
                 circuit.append(point.id2)
                 counter += 1
                 point_inserted = True
+                break
             elif point.id2 in circuit:
                 circuit.append(point.id1)
                 counter += 1
                 point_inserted = True
+                break
         if point_inserted == False:
             #create new circuit
             circuits.append([point.id1, point.id2])
             counter += 1
+        circuits = list(merge_circuits((circuits)))
     logger.debug(f"circuits: {circuits}")
     # multiply 3 biggest circuits
     circuit_sizes = [len(circuit) for circuit in circuits]
@@ -98,8 +132,6 @@ def compute_distances(points: list[Point]):
     distances = []
     for i in range(length):
         row = []
-        if i == 0:
-            continue
         for j in range(length):
             if j < i:
                 distance = points[j].get_distance(points[i])
