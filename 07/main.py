@@ -2,8 +2,9 @@ import os
 from loguru import logger
 import sys
 import copy
+import itertools
 logger.remove()
-logger.add(sys.stdout, level="DEBUG")
+logger.add(sys.stdout, level="INFO")
 
 START = "S"
 SPLITTER = "^"
@@ -73,7 +74,7 @@ def get_timelines(position: str, paths: list[str]):
 
 
 #Alterantive timelines
-def tachyon_flow_task_2(tachyon_map: list[str]) -> int:
+def get_map(tachyon_map: list[str]) -> int:
     #setup a list of branches
     paths = []
     # find first S
@@ -107,14 +108,57 @@ def tachyon_flow_task_2(tachyon_map: list[str]) -> int:
     print_tachyon_manifold(tachyon_map=tachyon_map)  
     for path in paths:
         logger.debug(path) 
-    timeline_count = get_timelines(position=paths[0][0], paths=paths[1:4])
-    return timeline_count
+    # timeline_count = get_timelines(position=paths[0][0], paths=paths[1:4])
+    return paths
 
+
+def path_possible(path: list[str], original_map) -> bool:
+    """
+    iterate backwards and check if diffference is 0 or 1
+    """
+    if len(path) <=5:
+        range_control = range(0, len(path)-1)
+    else:
+        range_control = range(len(path)-3,len(path)-1)
+    for i in range(0, len(path)-1):
+        possible_range = list(range(path[i]-1, path[i]+2 ))
+        if path[i+1] not in possible_range:
+            return False
+        #check if ther is a splitter
+        logger.debug(f"path[i+1]: {path[i+1]} | path[i]: {path[i]} | left: {original_map[i+1][path[i]]} | right {original_map[i+1][path[i]]}")
+        if path[i+1] < path[i] and original_map[i+1][path[i]] != SPLITTER:    #left split
+            return False
+        if path[i+1] > path[i] and original_map[i+1][path[i]] != SPLITTER:    #right split
+            return False
+
+    return True
+
+def get_timelines_iterative(tachyon_map: list[str], original_map: list[str]) -> int:
+    timelines = 0
+    orig_map_length = len(original_map)
+    existing_paths = [[tachyon_map[0][0]]]
+    for i in range(1, len(tachyon_map)):
+        logger.info(f"Processing row: {i}/{len(tachyon_map)}")
+        new_paths = []
+        for j in range(len(tachyon_map[i])):
+            for z in range(len(existing_paths)):
+                maybe_new = existing_paths[z] + [(tachyon_map[i][j])]
+                # logger.info(f"{maybe_new} | {len(original_map)}")
+                if path_possible(maybe_new, original_map[1:]):
+                    new_paths.append(maybe_new)
+        del existing_paths 
+        existing_paths = new_paths
+        logger.info(f"New paths length: {len(new_paths)}")
+    #drop duplicate lists
+    existing_paths.sort()
+    unique_paths = list(lis for lis,_ in itertools.groupby(existing_paths))
+    timelines = len(unique_paths)
+    return timelines
 
 def main():
     task_input = None
     file_path = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(file_path, "ex_input.txt"), "r") as f:
+    with open(os.path.join(file_path, "input.txt"), "r") as f:
         task_input = f.readlines()
     
     task_input = [list(line.strip()) for line in task_input]
@@ -124,7 +168,10 @@ def main():
 
     logger.info(f"Main manifold:")
     print_tachyon_manifold(task_input)
-    timelines = tachyon_flow_task_2(tachyon_map=copy.deepcopy(task_input))
+    filled_map = get_map(tachyon_map=copy.deepcopy(task_input))
+    # timelines = tachyon_flow_task_2(tachyon_map=copy.deepcopy(task_input))
+    timelines = get_timelines_iterative(tachyon_map=copy.deepcopy(filled_map), 
+                                        original_map=copy.deepcopy(task_input))
     logger.info(f"Total beams: {count}")
     logger.info(f"Timelines: {timelines}")
 
