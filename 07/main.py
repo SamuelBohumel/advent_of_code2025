@@ -50,29 +50,6 @@ def tachyon_flow_task_1(tachyon_map: list[str]) -> int:
         # print_tachyon_manifold(tachyon_map=tachyon_map)   
     return split_count
 
-
-def get_timelines(position: str, paths: list[str]):
-    # logger.debug(f"position: {position} | paths: {paths}")
-    numbers = paths[0]
-    count_left, count_right, count_middle = 0, 0, 0
-    for number in numbers:
-        if position - 1 == number:
-            if len(paths) == 1:
-                return 1
-            count_left += get_timelines(position=number, paths=paths[1:])
-        if position + 1 == number:
-            if len(paths) == 1:
-                return 1
-            count_right += get_timelines(position=number, paths=paths[1:])
-        if number == position:
-            if len(paths) == 1:
-                return 0
-            count_middle += get_timelines(position=number, paths=paths[1:])
-
-    logger.debug(f"left: {count_left} |  right: {count_right}")
-    return count_left + count_right + count_middle
-
-
 #Alterantive timelines
 def get_map(tachyon_map: list[str]) -> int:
     #setup a list of branches
@@ -112,48 +89,58 @@ def get_map(tachyon_map: list[str]) -> int:
     return paths
 
 
-def path_possible(path: list[str], original_map) -> bool:
-    """
-    iterate backwards and check if diffference is 0 or 1
-    """
-    if len(path) <=5:
-        range_control = range(0, len(path)-1)
-    else:
-        range_control = range(len(path)-3,len(path)-1)
-    for i in range(0, len(path)-1):
-        possible_range = list(range(path[i]-1, path[i]+2 ))
-        if path[i+1] not in possible_range:
-            return False
-        #check if ther is a splitter
-        logger.debug(f"path[i+1]: {path[i+1]} | path[i]: {path[i]} | left: {original_map[i+1][path[i]]} | right {original_map[i+1][path[i]]}")
-        if path[i+1] < path[i] and original_map[i+1][path[i]] != SPLITTER:    #left split
-            return False
-        if path[i+1] > path[i] and original_map[i+1][path[i]] != SPLITTER:    #right split
-            return False
-
-    return True
-
 def get_timelines_iterative(tachyon_map: list[str], original_map: list[str]) -> int:
-    timelines = 0
-    orig_map_length = len(original_map)
-    existing_paths = [[tachyon_map[0][0]]]
+    # Start at the X-position found in the first row of tachyon_map
+    start_x = tachyon_map[0].index(tachyon_map[0][0])
+    
+    # Dictionary mapping x → number of timelines at that position
+    x_to_t_count = {start_x: 1}
+
+    # Iterate through each subsequent row
     for i in range(1, len(tachyon_map)):
-        logger.info(f"Processing row: {i}/{len(tachyon_map)}")
-        new_paths = []
-        for j in range(len(tachyon_map[i])):
-            for z in range(len(existing_paths)):
-                maybe_new = existing_paths[z] + [(tachyon_map[i][j])]
-                # logger.info(f"{maybe_new} | {len(original_map)}")
-                if path_possible(maybe_new, original_map[1:]):
-                    new_paths.append(maybe_new)
-        del existing_paths 
-        existing_paths = new_paths
-        logger.info(f"New paths length: {len(new_paths)}")
-    #drop duplicate lists
-    existing_paths.sort()
-    unique_paths = list(lis for lis,_ in itertools.groupby(existing_paths))
-    timelines = len(unique_paths)
-    return timelines
+        row = original_map[i]
+        new_counts: dict[int, int] = {}
+
+        for x, count in x_to_t_count.items():
+            cell = row[x]
+
+            if cell == SPLITTER:
+                # Branch to left and right
+                for nx in (x - 1, x + 1):
+                    if 0 <= nx < len(row):   # bounds check
+                        if nx in tachyon_map[i]:  # must be a valid tachyon position
+                            new_counts[nx] = new_counts.get(nx, 0) + count
+            else:  # EMPTY_SPACE or anything else
+                if x in tachyon_map[i]:
+                    new_counts[x] = new_counts.get(x, 0) + count
+
+        x_to_t_count = new_counts
+
+    # Total number of possible timelines that reach the last row
+    return sum(x_to_t_count.values())
+
+def input_lines(original_map):
+    for line in original_map:
+        yield line
+
+def get_timelines_iterative_2(original_map: list[str]):
+
+
+    total = 0
+    rows = input_lines(original_map)
+
+    x_to_t_map = {next(rows).index(START): 1}
+    for row in rows:
+        new_x_to_t_map: dict[int, int] = {}
+        for x, t in x_to_t_map.items():
+            for x in (x,) if row[x] != SPLITTER else (x - 1, x + 1):
+                new_x_to_t_map[x] = new_x_to_t_map.get(x, 0) + t
+        x_to_t_map = new_x_to_t_map
+
+    total = sum(x_to_t_map.values())
+
+    return total
+
 
 def main():
     task_input = None
@@ -171,7 +158,8 @@ def main():
     filled_map = get_map(tachyon_map=copy.deepcopy(task_input))
     # timelines = tachyon_flow_task_2(tachyon_map=copy.deepcopy(task_input))
     timelines = get_timelines_iterative(tachyon_map=copy.deepcopy(filled_map), 
-                                        original_map=copy.deepcopy(task_input))
+                                        original_map=copy.deepcopy(task_input[1:]))
+    timelines = get_timelines_iterative_2(original_map=task_input)
     logger.info(f"Total beams: {count}")
     logger.info(f"Timelines: {timelines}")
 
