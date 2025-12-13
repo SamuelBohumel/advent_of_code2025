@@ -102,6 +102,18 @@ def wire_circuits(distances: list[float]):
     return result
 
 
+def check_whole_circuit(circuits, append_id: str, points: list[Point]) ->bool:
+    in_all = True
+    all_ids = []
+    for circuit in circuits:
+        if append_id not in circuit:
+            in_all = False
+        all_ids.extend(circuit)
+    if in_all and len(set(all_ids)) == len(points): 
+        return True
+    return False
+    
+
 def wire_circuits_task_2(distances: list[float], points: list[Point]):
     # keeep connecting all boex until they are all together
     sorted_pairs: list[Pair] = sort_distances(distances)
@@ -109,9 +121,11 @@ def wire_circuits_task_2(distances: list[float], points: list[Point]):
     #put first circuit together
     circuits.append([sorted_pairs[0].id1, sorted_pairs[0].id2])
     last_append = None
+    logger.info(f"Len sorted_conns: {len(sorted_pairs)}")
     i = 0
-    while i != len(sorted_pairs):
+    while i != len(sorted_pairs)-1:
         i += 1
+        # logger.info(f"1: {points[sorted_pairs[i].id1]} | 2: {points[sorted_pairs[i].id2]}")
         point = sorted_pairs[i]
         #check arrys if IDs are there
         point_inserted = False
@@ -141,7 +155,8 @@ def wire_circuits_task_2(distances: list[float], points: list[Point]):
             del circuits[index2]
             circuits[index1] = merged
             #break if there is only one circuit at all after merging
-            if len(circuits) == 1:
+            if len(circuits) == 1 and len(set(circuits[0])) == len(points):
+                logger.info(f"Final circuit: {circuits}")
                 break
         if point_inserted == False:
             #create new circuit
@@ -151,9 +166,9 @@ def wire_circuits_task_2(distances: list[float], points: list[Point]):
     #coordinates of last points
     x1 = points[last_append[0]].x
     x2 = points[last_append[1]].x
-    logger.info(f"Last connected points X coords: {x1}, {x2}")
-    # result = x1 * x2
-    # return result
+    logger.info(f"Last connected points X coords: {x1}, {x2} | i: {i}")
+    result = x1 * x2
+    return result
 
 
 def compute_distances(points: list[Point]):
@@ -174,7 +189,7 @@ def compute_distances(points: list[Point]):
 def main():
     task_input = None
     file_path = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(file_path, "ex_input.txt"), "r") as f:
+    with open(os.path.join(file_path, "input.txt"), "r") as f:
         task_input = f.readlines()
     
     task_input = [string.strip().split(',') for string in task_input]
