@@ -28,24 +28,58 @@ class Machine:
         return init_array
             
     
-    def button_press_to_turn_on(self) -> int:
+    def button_press_to_turn_on(self):   #task1
         """
         Starting from all controls turned off, returns mininal number of button presses needed to 
         get to final schema
         """
-        min_presses = 0
         init_array = [False for item in range(len(self.goal_schema))]
         for i in range(1, len(self.buttons)):
             combs = combinations(range(len(self.buttons)), i)
             for comb in combs:
                 logger.debug(comb)
                 result = self.evaluate_button_presses(deepcopy(init_array), comb)
-                logger.info(f"Correct combination: {comb}")
+                # logger.info(f"Correct combination: {comb}")
                 if result == self.goal_schema:
-                    return i
-        
+                    logger.info(f"Returning: {i} | {comb}")
+                    return i, comb
+        logger.info(f"Returning 0")
         return 0
-        
+    
+    
+    def get_lognest_buttons(self,):
+        max_length = max([len(button) for button in self.buttons])
+        max_buttons = []
+        for button in self.buttons:
+            if len(button) == max_length:
+                max_buttons.append(button)
+        return max_buttons    
+    
+    def pick_best_button(self, buttons, voltages):
+        candidates = buttons
+        while len(candidates) != 1:
+            max_voltage_index = max(range(len(voltages)), key=voltages.__getitem__)
+            current_candidates = []
+            for cand in candidates:
+                if max_voltage_index in cand:
+                    current_candidates.append(cand)
+            candidates = current_candidates
+            voltages[max_voltage_index] = 0
+        return candidates[0]
+            
+    
+    def task2_button_press_joltage_reqs(self, combination: tuple) -> int:
+        voltages = deepcopy(self.joltage_reqs)
+        # get max button presses of each_button:
+        for comb in combination:
+            for switch in self.buttons[comb]:
+                voltages[switch] -= 1
+        logger.info(f"voltages: {voltages}")
+        max_presses = []
+            
+            
+    
+        return 0
 
 def process_input(lines: str):
     machines = []
@@ -76,12 +110,19 @@ def main():
     
     machines = process_input(task_input)
     presses = 0
+    joltage_presses = 0
+    
     for machine in machines: 
         logger.debug(machine)
-        min_press = machine.button_press_to_turn_on()
-        logger.info(f"Machine: {machine} | presses: {min_press}")
+        min_press, combination = machine.button_press_to_turn_on()
+        logger.info(f"Machine: {machine} | presses: {min_press} | comb: {combination}")
         presses += min_press
+        machine.goal_schema = [number % 2 == 0 for number in machine.joltage_reqs]
+        min_press, combination = machine.button_press_to_turn_on()
+        joltage_press = machine.task2_button_press_joltage_reqs(combination)
+        joltage_presses += joltage_press
     logger.info(f"Task1 result: {presses}")
+    logger.info(f"Task 2 result: {joltage_presses}")
 
 
 if __name__ == "__main__":
