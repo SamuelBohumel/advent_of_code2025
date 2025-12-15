@@ -35,13 +35,15 @@ class Tree:
                 
         logger.info(f"Tree area: {self.area} | presents_area: {presents_area}")
             
+        if presents_area > self.area:
+            return False
         return True
 
 
 def main():
     task_input = None
     file_path = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(file_path, "ex_input.txt"), "r") as f:
+    with open(os.path.join(file_path, "input.txt"), "r") as f:
         task_input = f.readlines()
         task_input = [row.strip() for row in task_input]
     
