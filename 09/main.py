@@ -86,6 +86,7 @@ def get_bounds_x_y(coords: list[list[int]]):
 
 def rectangle_in_bounds(points: list[list[int]], bounds_x: dict, bounds_y: dict)-> bool:
     #check every point of rectangle frame
+    # If we find at least one point out of bounds - return 0
     for k in range(0, len(points)):
         if points[k-1][0] == points[k][0]:
             range_x = range(abs(points[k-1][1]-points[k][1]))
@@ -130,7 +131,7 @@ def task2_largest_rectangle(coords: list[list[int]]) -> int:
                       [coords[j][0], coords[j][1]], 
                       [coords[j][0], coords[i][1]]]
             
-            #compute area
+            #compute area if rectangle in shape
             if rectangle_in_bounds(points, bounds_x, bounds_y):
                 a = abs(coords[i][0] - coords[j][0])+1  # +1 because its inclusive
                 b = abs(coords[i][1] - coords[j][1])+1
