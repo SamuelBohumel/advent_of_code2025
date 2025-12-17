@@ -4,7 +4,49 @@ import sys
 from itertools import combinations, product
 from copy import deepcopy
 logger.remove()
-logger.add(sys.stdout, level="DEBUG")
+logger.add(sys.stdout, level="INFO")
+
+import functools as ft
+import itertools as it
+from typing import TYPE_CHECKING, Callable, Iterable, TypeVar
+if TYPE_CHECKING:
+    from _typeshed import SupportsRichComparisonT
+
+#Code took from https://topaz.github.io/paste/#XQAAAQDJBQAAAAAAAAA0m0pnuFI8c9Wb3/wnnQdRNg7fZuAhdzpGl81cryu8BNpFPlNCG5N9Hbui6do/JQig0Fil1PWryjZp/qDrs08VljDCUTekCWTHsimYu/NqfBot2RXV9wD3mL+A8vccT9nSb0EbQ3rxPGcC9yCg1iccFWjvSdj+Ru/EMG6WhQAN8zkBtWkXY9lFDgl4oa9NwBcHDpgOdN+nFrMx1/QRX77w+sKPuDfJqp7COdYSrzxfu5h94MHe86OtFo6hgtqMAjcsffZEtwwOvHo9/YgIwjtRfx4Tixae/V6FqfZqcB3PS4rfPF1r9Edq9/FG8IjGmOzi+8arerRXyTTAqIQgFQ/f2mw1hZ5YaAbj56pqtAcsvNpCRwllNW14pqHta4v1FWVnINa7o2Qxq/efSgBmCMDzPPKnDXCbqVuGUiUI9PszvV2UxwzHGdLiNwjvYBZyIjMEGnsuwoY2qW4llUrAlk97UDfdTHic0re1gO/X5jvJ+HjPuw6iNLm1yiYdvE0xA2892U8V1S3L4Aumrkpwr8GYuMdz31WwZWaa1wMOxzUV373v523pvsMQlga7F6J3m+7CEKLB6fANktUMmYDbUetEOpxtD7RcN9UA7F45xuDaGZr9uJX0+INDAdBs/szZN+SUHaMutiaCkW71ITrnP9k8k2nwlD3oXWtm+sOrWRx90tnvpQSeNQWLjyrg4qUwsXvNOEYcWCHdmwC6XkMmXG70PLD7di4BnvNXVppRiOOSqlc4fZs31qS53CuddWJTNQqteNWhw5U9Y9v5bvdwoS167mvnnj6+sSGGNaago9Qw3YcCKVNbttcqPpkqM0UejtaOHOAMMzr2ve22AGcZ+AMyIP0V0do=
+Lights = list[bool]
+Button = set[int]
+Joltage = tuple[int, ...]
+Machine = tuple[Lights, list[Button], Joltage]
+T = TypeVar('T')
+
+def joltage_cost(buttons: list[Button], joltage: Joltage):
+    def groupby(itr: Iterable[T], key: Callable[[T], 'SupportsRichComparisonT']):
+        return {k: list(v) for k, v in it.groupby(sorted(itr, key=key), key=key)}
+
+    def sub_halve(j_a: Joltage, j_b: Joltage) -> Joltage:
+        return tuple((a - b) // 2 for a, b, in zip(j_a, j_b))
+
+    def press(btns: tuple[Button, ...]) -> Joltage:
+        return tuple(sum(i in b for b in btns) for i in range(len(joltage)))
+
+    def pattern(jolts: Joltage) -> Joltage:
+        return tuple(n % 2 for n in jolts)
+
+    all_btn_combos = (combo for n in range(len(buttons) + 1) for combo in it.combinations(buttons, n))
+    press_patterns = groupby(all_btn_combos, lambda btns: pattern(press(btns)))
+
+    @ft.cache
+    def cost(jolts: Joltage) -> int:
+        if not any(jolts):
+            return 0
+        elif any(j < 0 for j in jolts) or pattern(jolts) not in press_patterns:
+            return sum(joltage)
+        else:
+            btn_combos = press_patterns[pattern(jolts)]
+            return min(len(btns) + 2 * cost(sub_halve(jolts, press(btns))) for btns in btn_combos)
+
+    return cost(joltage)
+
 
 SWITCH_ON = "#"
 SWITCH_OFF = "."
@@ -148,13 +190,14 @@ def main():
     for machine in machines: 
         logger.debug(machine)
         min_press, combination = machine.button_press_to_turn_on()
-        logger.info(f"Machine: {machine} | presses: {min_press} | comb: {combination}")
+        # logger.info(f"Machine: {machine} | presses: {min_press} | comb: {combination}")
         presses += min_press
         machine.goal_schema = [number % 2 == 1 for number in machine.joltage_reqs]
-        min_press, combination = machine.button_press_to_turn_on()
-        machine.task2_button_press_joltage_reqs(combination)
-        logger.info(f"Button press: {machine.task2_button_press}")
-        joltage_presses += machine.task2_button_press
+        # min_press, combination = machine.button_press_to_turn_on()
+        # machine.task2_button_press_joltage_reqs(combination)
+        # logger.info(f"Button press: {machine.task2_button_press}")
+        joltage_c = joltage_cost(machine.buttons, tuple(machine.joltage_reqs))
+        joltage_presses += joltage_c
     logger.info(f"Task1 result: {presses}")
     logger.info(f"Task 2 result: {joltage_presses}")
 
